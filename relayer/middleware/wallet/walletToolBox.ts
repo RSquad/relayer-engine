@@ -12,7 +12,7 @@ import {
 } from "./wallet.middleware.js";
 import { Ed25519Keypair, RawSigner } from "@mysten/sui.js";
 import { DirectSecp256k1Wallet } from "@cosmjs/proto-signing";
-import { mnemonicToPrivateKey } from "@ton/crypto";
+import { keyPairFromSeed } from "@ton/crypto";
 import {
   WalletContractV1R1,
   WalletContractV1R2,
@@ -57,8 +57,8 @@ export async function createWalletToolbox(
       const seiPkBuf = Buffer.from(privateKey, "hex");
       return createSeiWalletToolBox(providers, seiPkBuf);
       case wh.CHAIN_ID_TON:
-        const mnemonic = (privateKey.split(" "));
-        return createTonWalletToolBox(providers, mnemonic, walletVersion ?? "v4R2");
+        const seed =  Buffer.from(privateKey, "hex");
+        return createTonWalletToolBox(providers, seed, walletVersion ?? "v4R2");
   }
 
   throw new Error(`Unknown chain id ${chainId}`);
@@ -148,10 +148,10 @@ async function createSeiWalletToolBox(
 
 async function createTonWalletToolBox(
     providers: Providers,
-    mnemonic: string[],
+    seed: Buffer,
     walletVersion: string,
 ): Promise<WalletToolBox<TonWallet>> {
-  const keyPair = await mnemonicToPrivateKey(mnemonic);
+  const keyPair = keyPairFromSeed(seed);
 
   const tonWallet = await createWalletByVersion(walletVersion,keyPair.publicKey)
 
