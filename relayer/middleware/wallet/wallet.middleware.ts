@@ -4,6 +4,7 @@ import {
   CHAIN_ID_SEI,
   CHAIN_ID_SOLANA,
   CHAIN_ID_SUI,
+  CHAIN_ID_TON,
   CHAIN_ID_TO_NAME,
   ChainId,
   EVMChainId,
@@ -20,6 +21,18 @@ import { Registry } from "prom-client";
 import { Environment } from "../../environment.js";
 import { DirectSecp256k1Wallet } from "@cosmjs/proto-signing";
 
+import {
+  WalletContractV1R1,
+  WalletContractV1R2,
+  WalletContractV1R3,
+  WalletContractV2R1,
+  WalletContractV2R2,
+  WalletContractV3R1,
+  WalletContractV3R2,
+  WalletContractV4,
+  WalletContractV5R1,
+} from "@ton/ton";
+
 export type EVMWallet = ethers.Wallet;
 export type SuiWallet = sui.RawSigner;
 export type SeiWallet = DirectSecp256k1Wallet;
@@ -29,12 +42,24 @@ export type SolanaWallet = {
   payer: solana.Keypair;
 };
 
+export type TonWallet =
+    | InstanceType<typeof WalletContractV1R1>
+    | InstanceType<typeof WalletContractV1R2>
+    | InstanceType<typeof WalletContractV1R3>
+    | InstanceType<typeof WalletContractV2R1>
+    | InstanceType<typeof WalletContractV2R2>
+    | InstanceType<typeof WalletContractV3R1>
+    | InstanceType<typeof WalletContractV3R2>
+    | InstanceType<typeof WalletContractV4>
+    | InstanceType<typeof WalletContractV5R1>;
+
 export type Wallet =
   | EVMWallet
   | SolanaWallet
   | UntypedWallet
   | SuiWallet
-  | SeiWallet;
+  | SeiWallet
+  | TonWallet;
 
 export type UntypedWallet = UntypedProvider & {
   privateKey: string;
@@ -74,6 +99,8 @@ export interface ActionExecutor {
   onSei<T>(f: ActionFunc<T, SeiWallet>): Promise<T>;
 
   onSui<T>(f: ActionFunc<T, SuiWallet>): Promise<T>;
+
+  onTon<T>(f: ActionFunc<T, TonWallet>): Promise<T>;
 }
 
 function makeExecuteFunc(
@@ -108,6 +135,7 @@ function makeExecuteFunc(
   func.onSei = <T>(f: ActionFunc<T, SeiWallet>) => func(CHAIN_ID_SEI, f);
   func.onEVM = <T>(chainId: ChainId, f: ActionFunc<T, EVMWallet>) =>
     func(chainId, f);
+  func.onTON = <T>(f: ActionFunc<T, TonWallet>) => func(CHAIN_ID_TON, f);
   return func;
 }
 
