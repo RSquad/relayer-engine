@@ -1,4 +1,4 @@
-  import { Middleware } from "../compose.middleware.js";
+import { Middleware } from "../compose.middleware.js";
 import { Context } from "../context.js";
 import {
   CHAIN_ID_ACALA,
@@ -13,13 +13,13 @@ import {
   CHAIN_ID_SEPOLIA,
   CHAIN_ID_SOLANA,
   CHAIN_ID_SUI,
-  CHAIN_ID_TON,
   ChainId,
   CHAINS,
   EVMChainId,
   EVMChainNames,
 } from "@certusone/wormhole-sdk";
 import { ethers } from "ethers";
+const CHAIN_ID_TON = 62 as ChainId;
 import * as solana from "@solana/web3.js";
 import {
   CHAIN_ID_ARBITRUM,
@@ -168,7 +168,7 @@ const defaultSupportedChains = {
       endpoints: ["http://localhost:8546/"],
     },
     [CHAIN_ID_TON] : {
-      endpoints: ["https://testnet.toncenter.com/api/v2/jsonRPC"],
+      endpoints: ["https://testnet.toncenter.com/api/v2/jsonRPC?api_key=ec01c33940842fbf719fe2a2f6dc458c4f433e14e7d5f04dcb2b65a00b115dd2"],
     }
   },
 };
@@ -269,9 +269,9 @@ async function buildProviders(
             getCosmWasmClient(url),
         );
         providers.sei = await Promise.all(seiProviderPromises);
-      }else if (chainId === CHAIN_ID_TON){
+      } else if (chainId === CHAIN_ID_TON){
         const tonProviderPromises = endpoints.map(url =>
-            new TonClient(url),
+            new TonClient({ endpoint: url }),
         );
         providers.ton = await Promise.all(tonProviderPromises);
       } else {

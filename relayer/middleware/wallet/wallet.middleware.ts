@@ -4,11 +4,11 @@ import {
   CHAIN_ID_SEI,
   CHAIN_ID_SOLANA,
   CHAIN_ID_SUI,
-  CHAIN_ID_TON,
   CHAIN_ID_TO_NAME,
   ChainId,
   EVMChainId,
 } from "@certusone/wormhole-sdk";
+const CHAIN_ID_TON = 62 as ChainId;
 import * as sui from "@mysten/sui.js";
 import { WalletToolBox } from "./walletToolBox.js";
 import { Middleware } from "../../compose.middleware.js";
@@ -43,15 +43,15 @@ export type SolanaWallet = {
 };
 
 export type TonWallet =
-    | InstanceType<typeof WalletContractV1R1>
-    | InstanceType<typeof WalletContractV1R2>
-    | InstanceType<typeof WalletContractV1R3>
-    | InstanceType<typeof WalletContractV2R1>
-    | InstanceType<typeof WalletContractV2R2>
-    | InstanceType<typeof WalletContractV3R1>
-    | InstanceType<typeof WalletContractV3R2>
-    | InstanceType<typeof WalletContractV4>
-    | InstanceType<typeof WalletContractV5R1>;
+  | ReturnType<typeof WalletContractV1R1.create>
+  | ReturnType<typeof WalletContractV1R2.create>
+  | ReturnType<typeof WalletContractV1R3.create>
+  | ReturnType<typeof WalletContractV2R1.create>
+  | ReturnType<typeof WalletContractV2R2.create>
+  | ReturnType<typeof WalletContractV3R1.create>
+  | ReturnType<typeof WalletContractV3R2.create>
+  | ReturnType<typeof WalletContractV4.create>
+  | ReturnType<typeof WalletContractV5R1.create>;
 
 export type Wallet =
   | EVMWallet
@@ -135,7 +135,7 @@ function makeExecuteFunc(
   func.onSei = <T>(f: ActionFunc<T, SeiWallet>) => func(CHAIN_ID_SEI, f);
   func.onEVM = <T>(chainId: ChainId, f: ActionFunc<T, EVMWallet>) =>
     func(chainId, f);
-  func.onTON = <T>(f: ActionFunc<T, TonWallet>) => func(CHAIN_ID_TON, f);
+  func.onTon = <T>(f: ActionFunc<T, TonWallet>) => func(CHAIN_ID_TON, f);
   return func;
 }
 

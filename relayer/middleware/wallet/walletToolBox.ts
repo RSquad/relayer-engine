@@ -56,7 +56,7 @@ export async function createWalletToolbox(
     case wh.CHAIN_ID_SEI:
       const seiPkBuf = Buffer.from(privateKey, "hex");
       return createSeiWalletToolBox(providers, seiPkBuf);
-      case wh.CHAIN_ID_TON:
+      case 62 as wh.ChainId:
         const seed =  Buffer.from(privateKey, "hex");
         return createTonWalletToolBox(providers, seed, walletVersion ?? "v4R2");
   }
@@ -158,11 +158,10 @@ async function createTonWalletToolBox(
   return {
     ...providers,
     wallet: tonWallet,
-    address: tonWallet.address,
+    address: tonWallet.address.toString(),
     async getBalance(): Promise<string> {
-      return (
-          await providers.ton[0].getBalance(keyPair.publicKey)
-      ).toString();
+      const balance = await providers.ton[0].getBalance(tonWallet.address);
+      return balance.toString();
     },
   };
 }
@@ -190,6 +189,6 @@ function createWalletByVersion(version: string, publicKey: Buffer, workchain = 0
     case "v5r1_final":
       return WalletContractV5R1.create({ workchain, publicKey });
     default:
-      new Error(`invalid wallet version: ${version}`);
+      throw new Error(`invalid wallet version: ${version}`);
   }
 }
