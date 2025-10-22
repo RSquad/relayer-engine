@@ -19,6 +19,7 @@ import {
   EVMChainNames,
 } from "@certusone/wormhole-sdk";
 import { ethers } from "ethers";
+const CHAIN_ID_TON = 62 as ChainId;
 import * as solana from "@solana/web3.js";
 import {
   CHAIN_ID_ARBITRUM,
@@ -34,6 +35,7 @@ import { getCosmWasmClient } from "@sei-js/core";
 import { CosmWasmClient } from "@cosmjs/cosmwasm-stargate";
 import { Logger } from "winston";
 import { printError } from "../utils.js";
+import { TonClient } from "@ton/ton";
 
 export interface Providers {
   evm: Partial<Record<EVMChainId, ethers.providers.JsonRpcProvider[]>>;
@@ -41,6 +43,7 @@ export interface Providers {
   untyped: Partial<Record<ChainId, UntypedProvider[]>>;
   sui: sui.JsonRpcProvider[];
   sei: CosmWasmClient[];
+  ton: TonClient[];
 }
 
 export type UntypedProvider = {
@@ -164,6 +167,9 @@ const defaultSupportedChains = {
     [CHAIN_ID_BSC]: {
       endpoints: ["http://localhost:8546/"],
     },
+    [CHAIN_ID_TON] : {
+      endpoints: ["https://testnet.toncenter.com/api/v2/jsonRPC?api_key=ec01c33940842fbf719fe2a2f6dc458c4f433e14e7d5f04dcb2b65a00b115dd2"],
+    }
   },
 };
 
@@ -235,6 +241,7 @@ async function buildProviders(
     solana: [],
     sui: [],
     sei: [],
+    ton: [],
     untyped: {},
   };
   for (const [chainIdStr, chainCfg] of Object.entries(supportedChains)) {
@@ -259,9 +266,14 @@ async function buildProviders(
         });
       } else if (chainId === CHAIN_ID_SEI) {
         const seiProviderPromises = endpoints.map(url =>
-          getCosmWasmClient(url),
+            getCosmWasmClient(url),
         );
         providers.sei = await Promise.all(seiProviderPromises);
+      } else if (chainId === CHAIN_ID_TON){
+        const tonProviderPromises = endpoints.map(url =>
+            new TonClient({ endpoint: url }),
+        );
+        providers.ton = await Promise.all(tonProviderPromises);
       } else {
         providers.untyped[chainId] = endpoints.map(c => ({ rpcUrl: c }));
       }

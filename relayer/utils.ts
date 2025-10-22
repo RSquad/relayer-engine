@@ -7,6 +7,8 @@ import {
   parseVaa,
   SignedVaa,
 } from "@certusone/wormhole-sdk";
+import { Address as TonCoreAddress } from "@ton/core";
+const CHAIN_ID_TON = 62 as ChainId;
 import { bech32 } from "bech32";
 import { deriveWormholeEmitterKey } from "@certusone/wormhole-sdk/lib/cjs/solana/wormhole/index.js";
 import { zeroPad } from "ethers/lib/utils.js";
@@ -46,6 +48,9 @@ export function encodeEmitterAddress(
   }
   if (wormholeSdk.CHAIN_ID_SUI === chainId) {
     return strip0x(emitterAddressStr);
+  }
+  if (CHAIN_ID_TON === chainId){
+    return getEmitterAddressTon(emitterAddressStr);
   }
 
   throw new Error(`Unrecognized wormhole chainId ${chainId}`);
@@ -237,4 +242,34 @@ export function min(lhs: bigint, rhs: bigint): bigint {
 
 export function max(lhs: bigint, rhs: bigint): bigint {
   return lhs < rhs ? rhs : lhs;
+}
+
+function ensure32ByteHex(address: string): string {
+  let a = address.trim().toLowerCase();
+  if (a.startsWith("0x")) a = a.slice(2);
+  if (!/^[0-9a-f]*$/i.test(a)) throw new Error(`Invalid hex address: ${address}`);
+  if (a.length > 64) throw new Error(`Hex is longer than 32 bytes: ${address}`);
+  return a.padStart(64, "0");
+}
+
+function tryParseRawWcHex(s: string): string | null {
+  const idx = s.indexOf(":");
+  if (idx <= 0) return null;
+  const wc = s.slice(0, idx);
+  const hex = s.slice(idx + 1);
+  if (!(wc === "0" || wc === "-1")) return null;
+  if (!/^[0-9a-fA-F]{64}$/.test(hex)) return null;
+  return hex.toLowerCase();
+}
+
+export function getEmitterAddressTon(addr: string): string {
+  const s = addr.trim();
+  try {
+    const parsed = TonCoreAddress.parse(s);
+    return Buffer.from(parsed.hash).toString("hex");
+  } catch (_) {
+  }
+  const raw = tryParseRawWcHex(s);
+  if (raw) return raw;
+  return ensure32ByteHex(s);
 }

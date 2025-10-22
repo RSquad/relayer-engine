@@ -153,6 +153,7 @@ function providersShimFromLegacy(providers: LegacyProviders): Providers {
     ),
     sui: providers.sui ? [providers.sui] : [],
     sei: providers.sei ? [providers.sei] : [],
+    ton : []
   };
 }
 

@@ -8,6 +8,7 @@ import {
   ChainId,
   EVMChainId,
 } from "@certusone/wormhole-sdk";
+const CHAIN_ID_TON = 62 as ChainId;
 import * as sui from "@mysten/sui.js";
 import { WalletToolBox } from "./walletToolBox.js";
 import { Middleware } from "../../compose.middleware.js";
@@ -20,6 +21,18 @@ import { Registry } from "prom-client";
 import { Environment } from "../../environment.js";
 import { DirectSecp256k1Wallet } from "@cosmjs/proto-signing";
 
+import {
+  WalletContractV1R1,
+  WalletContractV1R2,
+  WalletContractV1R3,
+  WalletContractV2R1,
+  WalletContractV2R2,
+  WalletContractV3R1,
+  WalletContractV3R2,
+  WalletContractV4,
+  WalletContractV5R1,
+} from "@ton/ton";
+
 export type EVMWallet = ethers.Wallet;
 export type SuiWallet = sui.RawSigner;
 export type SeiWallet = DirectSecp256k1Wallet;
@@ -29,12 +42,24 @@ export type SolanaWallet = {
   payer: solana.Keypair;
 };
 
+export type TonWallet =
+  | ReturnType<typeof WalletContractV1R1.create>
+  | ReturnType<typeof WalletContractV1R2.create>
+  | ReturnType<typeof WalletContractV1R3.create>
+  | ReturnType<typeof WalletContractV2R1.create>
+  | ReturnType<typeof WalletContractV2R2.create>
+  | ReturnType<typeof WalletContractV3R1.create>
+  | ReturnType<typeof WalletContractV3R2.create>
+  | ReturnType<typeof WalletContractV4.create>
+  | ReturnType<typeof WalletContractV5R1.create>;
+
 export type Wallet =
   | EVMWallet
   | SolanaWallet
   | UntypedWallet
   | SuiWallet
-  | SeiWallet;
+  | SeiWallet
+  | TonWallet;
 
 export type UntypedWallet = UntypedProvider & {
   privateKey: string;
@@ -74,6 +99,8 @@ export interface ActionExecutor {
   onSei<T>(f: ActionFunc<T, SeiWallet>): Promise<T>;
 
   onSui<T>(f: ActionFunc<T, SuiWallet>): Promise<T>;
+
+  onTon<T>(f: ActionFunc<T, TonWallet>): Promise<T>;
 }
 
 function makeExecuteFunc(
@@ -108,6 +135,7 @@ function makeExecuteFunc(
   func.onSei = <T>(f: ActionFunc<T, SeiWallet>) => func(CHAIN_ID_SEI, f);
   func.onEVM = <T>(chainId: ChainId, f: ActionFunc<T, EVMWallet>) =>
     func(chainId, f);
+  func.onTon = <T>(f: ActionFunc<T, TonWallet>) => func(CHAIN_ID_TON, f);
   return func;
 }
 
